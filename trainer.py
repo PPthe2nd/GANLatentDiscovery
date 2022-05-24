@@ -26,7 +26,8 @@ class Params(object):
         self.deformator_lr = 0.0001
         self.shift_predictor_lr = 0.0001
         self.n_steps = int(1e+5)
-        self.batch_size = 32
+        #self.batch_size = 32
+        self.batch_size = 12
 
         self.directions_count = None
         self.max_latent_dim = None
@@ -187,6 +188,7 @@ class Trainer(object):
 
         recovered_step = self.start_from_checkpoint(deformator, shift_predictor)
         for step in range(recovered_step, self.p.n_steps, 1):
+            print(step)
             G.zero_grad()
             deformator.zero_grad()
             shift_predictor.zero_grad()

@@ -12,7 +12,29 @@ try:
 except Exception as e:
     print('StyleGAN2 load fail: {}'.format(e))
 
+import sys
+sys.path.insert(0, '../stylegan_xl/')
 
+import legacy
+import dnnlib
+
+class StyleGanXL(nn.Module):
+    def __init__(self, G):
+        super(StyleGanXL, self).__init__()
+        self.style_gan_xl = G
+        self.dim_shift = self.style_gan_xl.w_dim
+        self.dim_z = self.style_gan_xl.w_dim
+        
+    def forward(self, input):
+        w = torch.tile(torch.unsqueeze(input,dim=1),[1,self.style_gan_xl.num_ws,1])
+        w_avg = self.style_gan_xl.mapping.w_avg
+        w_avg = torch.mean(w_avg,0)
+        w_pca = w_avg + (w - w_avg)
+        return self.style_gan_xl.synthesis(w, noise_mode='const')[0]
+        
+    def gen_shifted(self, z, shift):
+        return self.forward(z + shift)
+    
 class ConditionedBigGAN(nn.Module):
     def __init__(self, big_gan, target_classes=(239)):
         super(ConditionedBigGAN, self).__init__()
@@ -111,3 +133,12 @@ def make_style_gan2(size, weights, shift_in_w=True):
     G.cuda().eval()
 
     return StyleGAN2Wrapper(G, shift_in_w=shift_in_w)
+
+
+def make_style_gan_xl(weights):
+    with dnnlib.util.open_url(weights) as f:
+        G = legacy.load_network_pkl(f)['G_ema']
+        G = G.requires_grad_(False)
+    G =  StyleGanXL(G)
+    G.cuda().eval()
+    return G

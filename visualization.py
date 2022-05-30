@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from PIL import Image
 import io
 import os
-
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 from torch_tools.visualization import to_image
 
 from utils import make_noise, one_hot

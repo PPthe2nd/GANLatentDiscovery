@@ -27,7 +27,7 @@ class Params(object):
         self.shift_predictor_lr = 0.0001
         self.n_steps = int(1e+5)
         #self.batch_size = 32
-        self.batch_size = 12
+        self.batch_size = 4
 
         self.directions_count = None
         self.max_latent_dim = None
@@ -156,7 +156,6 @@ class Trainer(object):
     def log(self, G, deformator, shift_predictor, step, avgs):
         if step % self.p.steps_per_log == 0:
             self.log_train(step, True, [avg.flush() for avg in avgs])
-
         if step % self.p.steps_per_img_log == 0:
             self.log_interpolation(G, deformator, step)
 
@@ -188,7 +187,6 @@ class Trainer(object):
 
         recovered_step = self.start_from_checkpoint(deformator, shift_predictor)
         for step in range(recovered_step, self.p.n_steps, 1):
-            print(step)
             G.zero_grad()
             deformator.zero_grad()
             shift_predictor.zero_grad()
@@ -207,7 +205,7 @@ class Trainer(object):
             else:
                 imgs = G(z)
                 imgs_shifted = G.gen_shifted(z, shift)
-
+                
             logits, shift_prediction = shift_predictor(imgs, imgs_shifted)
             logit_loss = self.p.label_weight * self.cross_entropy(logits, target_indices)
             shift_loss = self.p.shift_weight * torch.mean(torch.abs(shift_prediction - shifts))

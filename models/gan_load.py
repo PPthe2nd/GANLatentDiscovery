@@ -30,7 +30,7 @@ class StyleGanXL(nn.Module):
         w_avg = self.style_gan_xl.mapping.w_avg
         w_avg = torch.mean(w_avg,0)
         w_pca = w_avg + (w - w_avg)
-        return self.style_gan_xl.synthesis(w, noise_mode='const')[0]
+        return self.style_gan_xl.synthesis(w, noise_mode='const')
         
     def gen_shifted(self, z, shift):
         return self.forward(z + shift)

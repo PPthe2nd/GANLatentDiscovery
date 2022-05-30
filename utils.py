@@ -3,6 +3,7 @@ import sys
 import json
 import torch
 from scipy.stats import truncnorm
+from scipy.stats import loglaplace
 
 
 def make_noise(batch, dim, truncation=None):
@@ -11,7 +12,8 @@ def make_noise(batch, dim, truncation=None):
     if truncation is None or truncation == 1.0:
         return torch.randn([batch] + dim)
     else:
-        return torch.from_numpy(truncated_noise([batch] + dim, truncation)).to(torch.float)
+        #return torch.from_numpy(truncated_noise([batch] + dim, truncation)).to(torch.float)
+        return torch.from_numpy(w_space_noise([batch] + dim)).to(torch.float)
 
       
 def is_conditional(G):
@@ -35,3 +37,6 @@ def save_command_run_params(args):
 
 def truncated_noise(size, truncation=1.0):
     return truncnorm.rvs(-truncation, truncation, size=size)
+
+def w_space_noise(size):
+    return loglaplace.rvs(3.25,loc=-.8,scale=1,size=size)

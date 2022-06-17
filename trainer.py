@@ -37,7 +37,7 @@ class Params(object):
 
         self.steps_per_log = 10
         self.steps_per_save = 10000
-        self.steps_per_img_log = 10
+        self.steps_per_img_log = 1000
         self.steps_per_backup = 1000
 
         #self.truncation = None

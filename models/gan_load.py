@@ -22,14 +22,21 @@ class StyleGanXL(nn.Module):
     def __init__(self, G):
         super(StyleGanXL, self).__init__()
         self.style_gan_xl = G
-        self.dim_shift = self.style_gan_xl.w_dim
-        self.dim_z = self.style_gan_xl.w_dim
+        #self.dim_shift = self.style_gan_xl.w_dim
+        #self.dim_z = self.style_gan_xl.w_dim
+        
+        self.dim_shift = self.style_gan_xl.z_dim
+        self.dim_z = self.style_gan_xl.z_dim
         
     def forward(self, input):
-        w = torch.tile(torch.unsqueeze(input,dim=1),[1,self.style_gan_xl.num_ws,1])
-        w_avg = self.style_gan_xl.mapping.w_avg
-        w_avg = torch.mean(w_avg,0)
-        w_pca = w_avg + (w - w_avg)
+        #w = torch.tile(torch.unsqueeze(input,dim=1),[1,self.style_gan_xl.num_ws,1])
+        #w_avg = self.style_gan_xl.mapping.w_avg
+        #w_avg = torch.mean(w_avg,0)
+        #w = w_avg + (w - w_avg) * 0.8
+        #return self.style_gan_xl.synthesis(w, noise_mode='const')
+        cs = torch.zeros([input.shape[0], self.style_gan_xl.mapping.c_dim])
+        cs[:,373] = 1
+        w = self.style_gan_xl.mapping(input,cs.cuda())
         return self.style_gan_xl.synthesis(w, noise_mode='const')
         
     def gen_shifted(self, z, shift):

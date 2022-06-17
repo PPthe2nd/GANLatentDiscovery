@@ -12,8 +12,8 @@ def make_noise(batch, dim, truncation=None):
     if truncation is None or truncation == 1.0:
         return torch.randn([batch] + dim)
     else:
-        #return torch.from_numpy(truncated_noise([batch] + dim, truncation)).to(torch.float)
-        return torch.from_numpy(w_space_noise([batch] + dim)).to(torch.float)
+        return torch.from_numpy(truncated_noise([batch] + dim, truncation)).to(torch.float)
+        #return torch.from_numpy(w_space_noise([batch] + dim)).to(torch.float)
 
       
 def is_conditional(G):

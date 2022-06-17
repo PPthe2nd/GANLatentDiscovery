@@ -62,7 +62,15 @@ def main():
         weights_path = WEIGHTS[args.gan_type]
 
     G = load_generator(args.__dict__, weights_path)
-
+    
+    if args.gan_type == 'StyleGanXL':
+        zs = torch.randn([1, G.style_gan_xl.mapping.z_dim], device=args.device)
+        cs = torch.zeros([1, G.style_gan_xl.mapping.c_dim], device=args.device)
+        w_stds1 = G.style_gan_xl.mapping(zs,cs)
+        temp = G.style_gan_xl.synthesis(w_stds1, noise_mode='const')
+        temp.to('cpu')
+        w_stds1.to('cpu')
+    
     deformator = LatentDeformator(shift_dim=G.dim_shift,
                                   input_dim=args.directions_count,
                                   out_dim=args.max_latent_dim,

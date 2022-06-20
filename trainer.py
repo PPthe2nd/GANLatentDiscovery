@@ -27,7 +27,7 @@ class Params(object):
         self.shift_predictor_lr = 0.0001
         self.n_steps = int(1e+5)
         #self.batch_size = 32
-        self.batch_size = 4
+        self.batch_size = 6
 
         self.directions_count = None
         self.max_latent_dim = None
@@ -174,8 +174,10 @@ class Trainer(object):
         shift_predictor.cuda().train()
 
         should_gen_classes = is_conditional(G)
+
         if multi_gpu:
             G = DataParallelPassthrough(G)
+            shift_predictor = DataParallelPassthrough(shift_predictor)
 
         deformator_opt = torch.optim.Adam(deformator.parameters(), lr=self.p.deformator_lr) \
             if deformator.type not in [DeformatorType.ID, DeformatorType.RANDOM] else None
@@ -200,14 +202,15 @@ class Trainer(object):
 
             # Deformation
             shift = deformator(basis_shift)
-            if should_gen_classes:
-                imgs = G(z, classes)
-                imgs_shifted = G.gen_shifted(z, shift, classes)
-            else:
-                imgs = G(z)
-                imgs_shifted = G.gen_shifted(z, shift)
+            #if should_gen_classes:
+            #    imgs = G(z, classes)
+            #    imgs_shifted = G.gen_shifted(z, shift, classes)
+            #else:
+                #imgs = G(z)
+                #imgs_shifted = G.gen_shifted(z, shift)
                 
-            logits, shift_prediction = shift_predictor(imgs, imgs_shifted)
+            #logits, shift_prediction = shift_predictor(imgs, imgs_shifted)
+            logits, shift_prediction = shift_predictor(G(z), G(z+shift))
             logit_loss = self.p.label_weight * self.cross_entropy(logits, target_indices)
             shift_loss = self.p.shift_weight * torch.mean(torch.abs(shift_prediction - shifts))
 

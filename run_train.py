@@ -2,6 +2,7 @@ import os
 import argparse
 import random
 import torch
+import torch.nn as nn
 
 import matplotlib
 matplotlib.use("Agg")
@@ -13,7 +14,7 @@ from latent_shift_predictor import LatentShiftPredictor, LeNetShiftPredictor
 from trainer import Trainer, Params
 from visualization import inspect_all_directions
 from utils import make_noise, save_command_run_params
-
+from torch_tools.modules import DataParallelPassthrough
 
 def main():
     parser = argparse.ArgumentParser(description='Latent space rectification')
@@ -49,7 +50,11 @@ def main():
                         help='generator out images resolution. Required only for StyleGAN2')
 
     args = parser.parse_args()
-    torch.cuda.set_device(args.device)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    args.device = (1,2,3)
+    #torch.cuda.set_device(args.device)
+    #torch.cuda.set_device(2)
+    torch.cuda.device(device)
     random.seed(args.seed)
     torch.random.manual_seed(args.seed)
 
@@ -62,15 +67,7 @@ def main():
         weights_path = WEIGHTS[args.gan_type]
 
     G = load_generator(args.__dict__, weights_path)
-    
-    if args.gan_type == 'StyleGanXL':
-        zs = torch.randn([1, G.style_gan_xl.mapping.z_dim], device=args.device)
-        cs = torch.zeros([1, G.style_gan_xl.mapping.c_dim], device=args.device)
-        w_stds1 = G.style_gan_xl.mapping(zs,cs)
-        temp = G.style_gan_xl.synthesis(w_stds1, noise_mode='const')
-        temp.to('cpu')
-        w_stds1.to('cpu')
-    
+
     deformator = LatentDeformator(shift_dim=G.dim_shift,
                                   input_dim=args.directions_count,
                                   out_dim=args.max_latent_dim,

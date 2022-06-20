@@ -29,5 +29,5 @@ WEIGHTS = {
     'SN_Anime': 'models/pretrained/generators/SN_Anime',
     'StyleGAN2': 'models/pretrained/StyleGAN2/stylegan2-car-config-f.pt',
 #    'StyleGanXL': 'https://s3.eu-central-1.amazonaws.com/avg-projects/stylegan_xl/models/imagenet512.pkl'
-    'StyleGanXL': 'https://s3.eu-central-1.amazonaws.com/avg-projects/stylegan_xl/models/imagenet256.pkl'
+    'StyleGanXL': 'https://s3.eu-central-1.amazonaws.com/avg-projects/stylegan_xl/models/imagenet512.pkl'
 }

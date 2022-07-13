@@ -48,6 +48,7 @@ def main():
                         help='latent directions search in w-space for StyleGAN2')
     parser.add_argument('--gan_resolution', type=int, default=1024,
                         help='generator out images resolution. Required only for StyleGAN2')
+    parser.add_argument('--roi', type=str, required=False, help='Roi to analyze')
 
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

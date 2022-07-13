@@ -2,10 +2,10 @@ import os
 import json
 import torch
 
-from constants import DEFORMATOR_TYPE_DICT, HUMAN_ANNOTATION_FILE, WEIGHTS
+from constants import DEFORMATOR_TYPE_DICT, HUMAN_ANNOTATION_FILE, WEIGHTS, neural_path, train_ws_path
 from latent_deformator import LatentDeformator
 from latent_shift_predictor import LatentShiftPredictor, LeNetShiftPredictor
-from models.gan_load import make_big_gan, make_proggan, make_style_gan_xl, make_sngan
+from models.gan_load import make_big_gan, make_proggan, make_style_gan_xl, make_sngan, make_brain
 
 
 def load_generator(args, G_weights):
@@ -19,6 +19,9 @@ def load_generator(args, G_weights):
         G = make_style_gan2(args['gan_resolution'], G_weights, args['w_shift'])
     elif 'StyleGanXL' in gan_type:
         G = make_style_gan_xl(G_weights)
+    elif 'Brain' in gan_type:
+        roi = args['roi']
+        G = make_brain(G_weights,neural_path,train_ws_path,roi)
     else:
         G = make_sngan(G_weights)
 

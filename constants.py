@@ -28,6 +28,10 @@ WEIGHTS = {
     'SN_MNIST': 'models/pretrained/generators/SN_MNIST',
     'SN_Anime': 'models/pretrained/generators/SN_Anime',
     'StyleGAN2': 'models/pretrained/StyleGAN2/stylegan2-car-config-f.pt',
-#    'StyleGanXL': 'https://s3.eu-central-1.amazonaws.com/avg-projects/stylegan_xl/models/imagenet512.pkl'
-    'StyleGanXL': 'https://s3.eu-central-1.amazonaws.com/avg-projects/stylegan_xl/models/imagenet512.pkl'
+    'StyleGanXL': 'https://s3.eu-central-1.amazonaws.com/avg-projects/stylegan_xl/models/imagenet512.pkl',
+    'Brain': 'https://s3.eu-central-1.amazonaws.com/avg-projects/stylegan_xl/models/imagenet512.pkl'
 }
+
+
+neural_path = '/home/paolo/Documents/BrainLatentDiscovery/data/GANs_StyleGAN_XL_normMUA.mat'
+train_ws_path = '/home/paolo/Documents/BrainLatentDiscovery/data/ws_tr7.npy'

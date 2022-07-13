@@ -17,7 +17,11 @@ sys.path.insert(0, '../stylegan_xl/')
 
 import legacy
 import dnnlib
-
+    
+import h5py
+from sklearn.linear_model import LinearRegression
+import torch.nn.functional as F
+    
 class StyleGanXL(nn.Module):
     def __init__(self, G):
         super(StyleGanXL, self).__init__()
@@ -38,6 +42,45 @@ class StyleGanXL(nn.Module):
         cs[:,373] = 1
         w = self.style_gan_xl.mapping(input,cs.cuda())
         return self.style_gan_xl.synthesis(w, noise_mode='const')
+        
+    def gen_shifted(self, z, shift):
+        return self.forward(z + shift)
+    
+class Brain(nn.Module):
+    def __init__(self, G, neural_path, train_ws_path, roi):
+        super(Brain, self).__init__()
+        self.style_gan_xl = G
+  
+        ALL_n = np.linspace(0,1023,1024).astype('int')
+        V1_n = np.linspace(0,511,512).astype('int')
+        V4_n = np.linspace(512,767,256).astype('int')
+        IT_n = np.linspace(768,1023,256).astype('int')
+        rois = {'ALL':ALL_n, 'V1':V1_n, 'V4':V4_n,'IT':IT_n}
+        idx_n = rois[roi]
+        n_neurons = idx_n.shape[0]
+        self.dim_shift = n_neurons
+        self.dim_z = n_neurons
+        
+        #load neural data
+        data_dict = {}
+        f = h5py.File(neural_path,'r')
+        for k, v in f.items():
+            data_dict[k] = np.array(v)
+        train_n_data = data_dict['train_MUA'][:,idx_n]
+        #load stim latents
+        train_w_data = np.load(train_ws_path)[:,1,:]
+        
+        self.reg = LinearRegression().fit(train_n_data, train_w_data)
+        
+    def predict(self,input):
+        _pred_test_w_data = self.reg.predict(input.cpu().detach().numpy())
+        pred_test_w_data = np.repeat(_pred_test_w_data[None], self.style_gan_xl.mapping.num_ws, axis=0).transpose(1, 0, 2)
+        return torch.from_numpy(pred_test_w_data).to('cuda')
+        
+    def forward(self, input):
+        w = self.predict(input)
+        out = self.style_gan_xl.synthesis(w, noise_mode='const')
+        return F.interpolate(out,(128,128))
         
     def gen_shifted(self, z, shift):
         return self.forward(z + shift)
@@ -147,5 +190,14 @@ def make_style_gan_xl(weights):
         G = legacy.load_network_pkl(f)['G_ema']
         G = G.requires_grad_(False)
     G =  StyleGanXL(G)
+    G.cuda().eval()
+    return G
+
+
+def make_brain(weights,neural_path,train_ws_path,roi):
+    with dnnlib.util.open_url(weights) as f:
+        G = legacy.load_network_pkl(f)['G_ema']
+        G = G.requires_grad_(False)
+    G =  Brain(G,neural_path,train_ws_path,roi)
     G.cuda().eval()
     return G

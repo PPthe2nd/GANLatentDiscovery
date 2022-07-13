@@ -40,8 +40,8 @@ class Params(object):
         self.steps_per_img_log = 1000
         self.steps_per_backup = 1000
 
-        #self.truncation = None
-        self.truncation = .7
+        self.truncation = None
+        #self.truncation = .7
 
         for key, val in kwargs.items():
             if val is not None:

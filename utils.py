@@ -10,7 +10,7 @@ def make_noise(batch, dim, truncation=None):
     if isinstance(dim, int):
         dim = [dim]
     if truncation is None or truncation == 1.0:
-        return torch.randn([batch] + dim)
+        return torch.randn([batch] + dim) / 2
     else:
         return torch.from_numpy(truncated_noise([batch] + dim, truncation)).to(torch.float)
         #return torch.from_numpy(w_space_noise([batch] + dim)).to(torch.float)

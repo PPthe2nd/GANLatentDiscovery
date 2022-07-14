@@ -26,8 +26,8 @@ class Params(object):
         self.deformator_lr = 0.0001
         self.shift_predictor_lr = 0.0001
         self.n_steps = int(1e+5)
-        self.batch_size = 32
-        #self.batch_size = 6
+        self.batch_size = 36
+        #self.batch_size = 24
 
         self.directions_count = None
         self.max_latent_dim = None
@@ -107,7 +107,8 @@ class Trainer(object):
             json.dump(stat_dict, out)
 
     def log_interpolation(self, G, deformator, step):
-        noise = make_noise(1, G.dim_z, self.p.truncation).cuda()
+        #noise = make_noise(1, G.dim_z, self.p.truncation).cuda()
+        noise = G.data_augment(1).cuda().unsqueeze(0)
         if self.fixed_test_noise is None:
             self.fixed_test_noise = noise.clone()
         for z, prefix in zip([noise, self.fixed_test_noise], ['rand', 'fixed']):
@@ -194,7 +195,8 @@ class Trainer(object):
             deformator.zero_grad()
             shift_predictor.zero_grad()
 
-            z = make_noise(self.p.batch_size, G.dim_z, self.p.truncation).cuda()
+            #z = make_noise(self.p.batch_size, G.dim_z, self.p.truncation).cuda()
+            z = G.data_augment(self.p.batch_size).cuda()
             target_indices, shifts, basis_shift = self.make_shifts(deformator.input_dim)
 
             if should_gen_classes:
@@ -240,11 +242,13 @@ def validate_classifier(G, deformator, shift_predictor, params_dict=None, traine
 
     percents = torch.empty([n_steps])
     for step in range(n_steps):
-        z = make_noise(trainer.p.batch_size, G.dim_z, trainer.p.truncation).cuda()
+        #z = make_noise(trainer.p.batch_size, G.dim_z, trainer.p.truncation).cuda()
+        z = G.data_augment(trainer.p.batch_size).cuda()
         target_indices, shifts, basis_shift = trainer.make_shifts(deformator.input_dim)
 
         imgs = G(z)
-        imgs_shifted = G.gen_shifted(z, deformator(basis_shift))
+        #imgs_shifted = G.gen_shifted(z, deformator(basis_shift))
+        imgs_shifted = G(z + deformator(basis_shift))
 
         logits, _ = shift_predictor(imgs, imgs_shifted)
         percents[step] = (torch.argmax(logits, dim=1) == target_indices).to(torch.float32).mean()

@@ -67,6 +67,7 @@ class Brain(nn.Module):
         for k, v in f.items():
             data_dict[k] = np.array(v)
         train_n_data = data_dict['train_MUA'][:,idx_n]
+        self.data = train_n_data
         #load stim latents
         train_w_data = np.load(train_ws_path)[:,1,:]
         
@@ -84,6 +85,13 @@ class Brain(nn.Module):
         
     def gen_shifted(self, z, shift):
         return self.forward(z + shift)
+    
+    def data_augment(self,batch):
+        all_batch = []
+        for n in range(batch):
+            all_batch.append(self.data[np.random.randint(0,self.data.shape[0]-1,size=(self.data.shape[0],1))[0]])
+        all_batch = np.asarray(all_batch).squeeze()               
+        return torch.from_numpy(all_batch)
     
 class ConditionedBigGAN(nn.Module):
     def __init__(self, big_gan, target_classes=(239)):

@@ -26,8 +26,8 @@ class Params(object):
         self.deformator_lr = 0.0001
         self.shift_predictor_lr = 0.0001
         self.n_steps = int(1e+5)
-        self.batch_size = 36
-        #self.batch_size = 24
+        self.batch_size = 6
+        #self.batch_size = 2
 
         self.directions_count = None
         self.max_latent_dim = None
@@ -37,7 +37,8 @@ class Params(object):
 
         self.steps_per_log = 10
         self.steps_per_save = 10000
-        self.steps_per_img_log = 1000
+        self.steps_per_img_log = 100
+#        self.steps_per_img_log = 1000
         self.steps_per_backup = 1000
 
         self.truncation = None
@@ -194,7 +195,7 @@ class Trainer(object):
             G.zero_grad()
             deformator.zero_grad()
             shift_predictor.zero_grad()
-
+            
             #z = make_noise(self.p.batch_size, G.dim_z, self.p.truncation).cuda()
             z = G.data_augment(self.p.batch_size).cuda()
             target_indices, shifts, basis_shift = self.make_shifts(deformator.input_dim)
@@ -223,7 +224,7 @@ class Trainer(object):
             if deformator_opt is not None:
                 deformator_opt.step()
             shift_predictor_opt.step()
-
+      
             # update statistics trackers
             avg_correct_percent.add(torch.mean(
                     (torch.argmax(logits, dim=1) == target_indices).to(torch.float32)).detach())

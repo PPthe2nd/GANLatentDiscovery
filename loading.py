@@ -1,6 +1,7 @@
 import os
 import json
 import torch
+from collections import OrderedDict
 
 from constants import DEFORMATOR_TYPE_DICT, HUMAN_ANNOTATION_FILE, WEIGHTS, neural_path, train_ws_path
 from latent_deformator import LatentDeformator
@@ -28,7 +29,7 @@ def load_generator(args, G_weights):
     return G
 
 
-def load_from_dir(root_dir, model_index=None, G_weights=None, shift_in_w=True):
+def load_from_dir(root_dir, model_index=None, G_weights=None, shift_in_w=False, data_parallel = True):
     args = json.load(open(os.path.join(root_dir, 'args.json')))
     args['w_shift'] = shift_in_w
 
@@ -65,12 +66,23 @@ def load_from_dir(root_dir, model_index=None, G_weights=None, shift_in_w=True):
 
     deformator_model_path = os.path.join(models_dir, 'deformator_{}.pt'.format(model_index))
     shift_model_path = os.path.join(models_dir, 'shift_predictor_{}.pt'.format(model_index))
+
     if os.path.isfile(deformator_model_path):
         deformator.load_state_dict(
             torch.load(deformator_model_path, map_location=torch.device('cpu')))
     if os.path.isfile(shift_model_path):
-        shift_predictor.load_state_dict(
-            torch.load(shift_model_path, map_location=torch.device('cpu')))
+        if data_parallel == True:
+            state_dict = torch.load(shift_model_path, map_location=torch.device('cpu'))
+            # create new OrderedDict that does not contain `module.`
+            new_state_dict = OrderedDict()
+            for k, v in state_dict.items():
+                name = k[7:] # remove `module.`
+                new_state_dict[name] = v
+            # load params
+            shift_predictor.load_state_dict((new_state_dict))
+        else:
+            shift_predictor.load_state_dict(
+                torch.load(shift_model_path, map_location=torch.device('cpu')))
 
     setattr(deformator, 'annotation',
             load_human_annotation(os.path.join(root_dir, HUMAN_ANNOTATION_FILE)))

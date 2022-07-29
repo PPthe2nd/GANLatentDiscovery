@@ -4,6 +4,7 @@ import json
 import torch
 from scipy.stats import truncnorm
 from scipy.stats import loglaplace
+from sklearn.linear_model import LinearRegression
 
 
 def make_noise(batch, dim, truncation=None):
@@ -40,3 +41,9 @@ def truncated_noise(size, truncation=1.0):
 
 def w_space_noise(size):
     return loglaplace.rvs(3.25,loc=-.8,scale=1,size=size)
+
+def reg_brain(train_n_data,train_w_data):
+    reg = LinearRegression().fit(train_n_data, train_w_data)
+    coef_ = torch.from_numpy(reg.coef_,).transpose(1,0).to(torch.float)
+    intercept_ = torch.from_numpy(reg.intercept_).to(torch.float)
+    return coef_, intercept_

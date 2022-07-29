@@ -7,6 +7,7 @@ from models.ProgGAN.model import Generator as ProgGenerator
 from models.SNGAN.load import load_model_from_state_dict
 from models.gan_with_shift import gan_with_shift
 
+from utils import reg_brain
 try:
     from models.StyleGAN2.model import Generator as StyleGAN2Generator
 except Exception as e:
@@ -70,13 +71,19 @@ class Brain(nn.Module):
         self.data = train_n_data
         #load stim latents
         train_w_data = np.load(train_ws_path)[:,1,:]
-        
-        self.reg = LinearRegression().fit(train_n_data, train_w_data)
+        self.data1 = train_w_data
+        #self.reg = LinearRegression().fit(train_n_data, train_w_data)
+        #reg = LinearRegression().fit(train_n_data, train_w_data)
+        #self.coef_ = torch.from_numpy(reg.coef_,).transpose(1,0).to(torch.float)
+        #self.intercept_ = torch.from_numpy(reg.intercept_).to(torch.float)
+        self.coef_,self.intercept_ =  reg_brain(train_n_data, train_w_data)
         
     def predict(self,input):
-        _pred_test_w_data = self.reg.predict(input.cpu().detach().numpy())
-        pred_test_w_data = np.repeat(_pred_test_w_data[None], self.style_gan_xl.mapping.num_ws, axis=0).transpose(1, 0, 2)
-        return torch.from_numpy(pred_test_w_data).to('cuda')
+        #_pred_test_w_data = self.reg.predict(input.cpu().detach().numpy())
+        #pred_test_w_data = np.repeat(_pred_test_w_data[None], self.style_gan_xl.mapping.num_ws, axis=0).transpose(1, 0, 2)
+        #return torch.from_numpy(pred_test_w_data).to('cuda')
+        _pred_test_w_data = torch.mm(input,self.coef_.cuda())+self.intercept_.cuda()
+        return _pred_test_w_data.unsqueeze(1).repeat(1, self.style_gan_xl.mapping.num_ws, 1)
         
     def forward(self, input):
         w = self.predict(input)
@@ -91,7 +98,7 @@ class Brain(nn.Module):
         for n in range(batch):
             all_batch.append(self.data[np.random.randint(0,self.data.shape[0]-1,size=(self.data.shape[0],1))[0]])
         all_batch = np.asarray(all_batch).squeeze()               
-        return torch.from_numpy(all_batch)
+        return torch.from_numpy(all_batch).to(torch.float)
     
 class ConditionedBigGAN(nn.Module):
     def __init__(self, big_gan, target_classes=(239)):
@@ -205,7 +212,7 @@ def make_style_gan_xl(weights):
 def make_brain(weights,neural_path,train_ws_path,roi):
     with dnnlib.util.open_url(weights) as f:
         G = legacy.load_network_pkl(f)['G_ema']
-        G = G.requires_grad_(False)
+        G = G.requires_grad_(False).cuda()
     G =  Brain(G,neural_path,train_ws_path,roi)
     G.cuda().eval()
     return G

@@ -26,11 +26,12 @@ class Params(object):
         self.deformator_lr = 0.0001
         self.shift_predictor_lr = 0.0001
         self.n_steps = int(1e+5)
-        self.batch_size = 6
-        #self.batch_size = 2
+        self.batch_size = 2
+        #self.batch_size = 6
 
         self.directions_count = None
-        self.max_latent_dim = None
+        #self.max_latent_dim = None
+        self.max_latent_dim = 24
 
         self.label_weight = 1.0
         self.shift_weight = 0.25

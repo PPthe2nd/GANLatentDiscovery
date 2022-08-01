@@ -212,7 +212,7 @@ def make_style_gan_xl(weights):
 def make_brain(weights,neural_path,train_ws_path,roi):
     with dnnlib.util.open_url(weights) as f:
         G = legacy.load_network_pkl(f)['G_ema']
-        G = G.requires_grad_(False).cuda()
+        G = G.requires_grad_(False)
     G =  Brain(G,neural_path,train_ws_path,roi)
     G.cuda().eval()
     return G
